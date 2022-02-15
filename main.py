@@ -99,7 +99,7 @@ def encounter(state):
   if state["currentRoom"] == state["wumpusRoom"]:
     if state["wumpusState"] == WumpusState.ASLEEP:
       print("smh my head wumpie dumpie wants to eat u")
-      state["wumpusState"] == WumpusState.AWAKE
+      state["wumpusState"] = WumpusState.AWAKE
     else:
       print("nom nom nom wumpie dumpie ate u")
       state["alive"] = False
