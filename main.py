@@ -11,6 +11,9 @@ gameState = {
   "wumpusState": WumpusState.ASLEEP,
   "currentRoom": 1,
   "wumpusRoom" : 1,
+  "startleChance": .5,
+  "sleepChance": .33,
+  "numAmmo": 4,
   "caveMap": {
     1: [2, 3, 8],
     2: [1, 3, 13],
@@ -52,6 +55,13 @@ def newGame(state):
     state["currentRoom"] = safeRandomRoom(state)
   return
 
+def niceAmmoList(numAmmo):
+  if numAmmo == 0:
+    return "leave u ran out stoopid"
+  if numAmmo == 1:
+    return "u got one round dawg"
+  return f"u have {numAmmo} rounds left"
+
 def niceExitList(state):
   currentRoom = state["currentRoom"]
   roomExits = state["caveMap"][currentRoom]
@@ -74,14 +84,18 @@ def niceExitList(state):
   
   return niceList
 
-def look(state):
+def sense(state):
   currentRoom = state["currentRoom"]
   print(f"bestie ur in room {currentRoom}")
+  print(niceAmmoList(state["numAmmo"]))
   if currentRoom == state["wumpusRoom"]:
     if state["wumpusState"] == WumpusState.ASLEEP:
       print("wumpie dumpie is taking a phat nap")
     else:
       print("wumpie dumpie is lookin at uuu")
+  for exitNumber in state["caveMap"][state["currentRoom"]]:
+      if state["wumpusRoom"] == exitNumber:
+        print("yummy yummy wumpie dumpie tooted")
   print(niceExitList(state))
 
 def move(state):
@@ -96,21 +110,37 @@ def move(state):
   state["currentRoom"] = nextRoom
   
 def encounter(state):
-  if state["currentRoom"] == state["wumpusRoom"]:
-    if state["wumpusState"] == WumpusState.ASLEEP:
-      print("smh my head wumpie dumpie wants to eat u")
-      state["wumpusState"] = WumpusState.AWAKE
-    else:
-      print("nom nom nom wumpie dumpie ate u")
-      state["alive"] = False
+  if state["currentRoom"] == state["wumpusRoom"] and state["wumpusState"] == WumpusState.ASLEEP:
+    print("smh my head wumpie dumpie wants to eat u")
+    state["wumpusState"] = WumpusState.AWAKE
+    if (random.random() < state["startleChance"]):
+      roomExits = state["caveMap"][state["currentRoom"]]
+      if len(roomExits) == 0:
+        print('u scared wumpie dumpie but u cant get out lol')
+      else:
+        print('arent u one lucky gal u scared wumpie dumpie and he ran out an exit')
+        state["wumpusRoom"] = random.choice(roomExits)
+  if state["currentRoom"] == state["wumpusRoom"] and state["wumpusState"] == WumpusState.AWAKE:
+    print("nom nom nom wumpie dumpie ate u")
+    state["alive"] = False
+
+def updateHazards(state):
+  if state["wumpusState"] == WumpusState.AWAKE:
+    roomExits = state["caveMap"][state["currentRoom"]]
+    if random.random() <state["sleepChance"]:
+      print("hint: wumpie dumpie is napping bro shhh")
+      state["wumpusState"] = WumpusState.ASLEEP
+    elif len(roomExits) > 0:
+      state["wumpusRoom"] = random.choice(roomExits)
 
 newGame(gameState)
 print("ur mom")
 print()
 
 while gameState["alive"]:
+  updateHazards(gameState)
   print("hint: the wumpus is in room {wumpusRoom}".format_map(gameState))
-  look(gameState)
+  sense(gameState)
   encounter(gameState)
   if not gameState["alive"]: 
     break
